@@ -1,4 +1,4 @@
-from models.DCCA_official import DCCA_official
+from models.Het import Het_Model
 from models.DCCA_AM import DCCA_AM
 from models.BimodalLSTM import BimodalLSTM
 from models.CRNN import CRNN
@@ -11,7 +11,7 @@ from models.HetEmotionNet import HetEmotionNet
 from models.G2G import EncoderNet
 
 Model={
-    'DCCA_official': DCCA_official, 
+    'Het_Model': Het_Model,
     'DCCA_AM': DCCA_AM,
     'BimodalLSTM': BimodalLSTM,
     'CRNN': CRNN,
