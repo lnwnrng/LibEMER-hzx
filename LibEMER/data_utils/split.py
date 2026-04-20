@@ -383,7 +383,7 @@ def merge_to_part_multimodal(eeg_data, bio_data, label,setting=None):
         m_bio_data = [[[] for _ in range(len(sessions))]]
         m_label = [[[] for _ in range(len(sessions))]]
         for i in sessions:
-            for idx1, (sub_eeg,sub_bio,sub_label) in enumerate(eeg_data[i],bio_data[i], label[i]):
+            for idx1, (sub_eeg,sub_bio,sub_label) in enumerate(zip(eeg_data[i],bio_data[i], label[i])):
                 for idx2, (trail_eeg, trial_bio, trial_label) in enumerate(zip(sub_eeg,sub_bio,sub_label)):
                     m_eeg_data[0][i].extend(trail_eeg)
                     m_bio_data[0][i].extend(trial_bio)

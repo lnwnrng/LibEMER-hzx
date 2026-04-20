@@ -226,7 +226,7 @@ def time_extraction(raw_data, sample_rate, time_window, overlap):
                 sample_num = (trial.shape[1]-sample_length) //step + 1
                 new_trial = np.zeros((sample_num, trial.shape[0], sample_length))
                 for i in range(sample_num):
-                    start = i*sample_length
+                    start = i*step
                     end = start+sample_length
                     new_trial[i] = trial[:,start:end]
 
@@ -454,7 +454,7 @@ def de_extraction(data, sample_rate, extract_bands, time_window, overlap):
             t += window_size-noverlap
     return de_data
 
-def power_spectrum_extraction(data,sample_rate,time_window, overlap):
+def power_spectrum_extraction(data, sample_rate, extract_bands, time_window, overlap):
     """
     Calculate the power spectrum of the input data.
     input shape -> data: (channel, filter_data)

@@ -102,7 +102,6 @@ class HetEmotionNet(nn.Module):
         self.STDCN1_T = STDCN_with_GRU(
             self.sample_feature_num, self.num_node, self.final_out_node, 1, device)
         self.flatten = nn.Flatten()
-        self.flatten = nn.Flatten()
         self.linF = nn.Linear(self.num_band, self.sample_feature_num // 2)
         self.linT = nn.Linear(self.sample_feature_num,
                               self.sample_feature_num // 2)

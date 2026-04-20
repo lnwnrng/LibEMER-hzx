@@ -86,7 +86,7 @@ available_dataset = [
 
 extract_dataset = {
     "seed_de", "seed_de_lds", "seed_psd", "seed_psd_lds", "seed_dasm", "seed_dasm_lds"
-    , "seed_rasm", "seed_rasm_lds", "seed_asm", "see_und_asm_lds", "seed_dcau", "seed_dcau_lds", "seediv_de_lds", "seediv_de_movingAve",
+    , "seed_rasm", "seed_rasm_lds", "seed_asm", "seed_asm_lds", "seed_dcau", "seed_dcau_lds", "seediv_de_lds", "seediv_de_movingAve",
     "seediv_psd_movingAve", "seediv_psd_lds",'seedv_de_lds','seedv_de'
 }
 
@@ -220,7 +220,7 @@ def read_seed_multimodal(dir_path):
             eye_trial = eye_trial.reshape(eye_trial.shape[0], 1, -1)
             sub_eye.append(eye_trial)
         for index in seed_test_trial_list:
-            eye_trial  = eye_train_data[index[0]:index[1]+1]
+            eye_trial  = eye_test_data[index[0]:index[1]+1]
             eye_trial = eye_trial.reshape(eye_trial.shape[0], 1, -1)
             sub_eye.append(eye_trial)
         all_eye[session_id].append(sub_eye) 

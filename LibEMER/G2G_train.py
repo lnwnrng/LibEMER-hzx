@@ -6,7 +6,7 @@ from data_utils.split import get_split_index, index_to_data_multimodal, merge_to
 
 from utils.args import get_args_parser
 from utils.store import make_output_dir
-from utils.utils import state_log, result_log, setup_seed, sub_result_log, CE_Label_Smooth_Loss
+from utils.utils import state_log, result_log, setup_seed, sub_result_log
 
 import numpy as np
 import torch

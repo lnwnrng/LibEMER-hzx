@@ -27,7 +27,7 @@ def train(model, dataset_train, dataset_val, dataset_test, device, output_dir="r
     )
     test_sub_label_loader = DataLoader(
         test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4, drop_last=True
-    )
+    ) if test_sub_label is not None else None
     model = model.to(device)
     best_metric = {s: 0. for s in metrics}
     for epoch in range(epochs):

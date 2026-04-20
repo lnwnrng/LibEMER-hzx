@@ -102,7 +102,6 @@ class Het_Model(nn.Module):
         self.STDCN1_T = STDCN_with_GRU(
             self.sample_feature_num, self.num_node, self.final_out_node, 1, device)
         self.flatten = nn.Flatten()
-        self.flatten = nn.Flatten()
         self.linF = nn.Linear(self.num_band, self.sample_feature_num // 2)
         self.linT = nn.Linear(self.sample_feature_num,
                               self.sample_feature_num // 2)
@@ -115,7 +114,6 @@ class Het_Model(nn.Module):
     def forward(self, eeg, bio):
         # x_F:(b,n,4) x_T:(b,n,sample_feature_num) A:(b,n,n)
         x = torch.cat([eeg, bio],dim=1)
-        print(x.shape)
         x_F, x_T = x[:, :, :4], x[:, :, 4:]
         A = get_het_adjacency_matrix(x_T).clone().detach().to(self.device)
         x_F = self.Dropout(x_F)
