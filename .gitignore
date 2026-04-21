@@ -1,2 +1,9 @@
-./CLAUDE.md
+/CLAUDE.md
 # CLAUDE
+/LibEMER/result/*
+/LibEMER/log/*
+/LibEMER/Train/__pycache__/*
+/LibEMER/models/__pycache__/*
+/LibEMER/utils/__pycache__/*
+/LibEMER/data_utils/__pycache__/*
+/LibEMER/config/__pycache__/*
