@@ -92,9 +92,7 @@ def train(model, dataset_pretrain,dataset_train, dataset_val, dataset_test, devi
             scheduler.step()
         print('\033[32m train state:'+lossmetric.value())
         loss_value = pretrain_evaluate(model, data_loader_val, device, recon_criterion, loss_func, loss_param)
-        if epoch == 0:
-            best_loss = loss_value
-        if loss_value < best_loss:
+        if epoch == 0 or loss_value < best_loss:
             best_loss = loss_value
             save_state(output_dir, model, pretrain_optimizer, epoch, metric='pretrainloss', state='best')
    

@@ -23,7 +23,7 @@ def train(model, dataset_pretrain, dataset_train, dataset_val, dataset_test, dev
     data_loader_val = DataLoader(dataset_val, sampler=sampler_val, batch_size=batch_size, num_workers=4)
     data_loader_test = DataLoader(dataset_test, sampler=sampler_test, batch_size=batch_size, num_workers=4)
     test_sub_label_loader = DataLoader(
-        test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4
+        test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4, drop_last=False
     ) if test_sub_label is not None else None
     model = model.to(device)
 
@@ -84,7 +84,7 @@ def train(model, dataset_pretrain, dataset_train, dataset_val, dataset_test, dev
     return metric_value
 
 @torch.no_grad()
-def evaluate(model, data_loader, device, metrics, criterion):
+def evaluate(model, data_loader, device, metrics, criterion, loss_func=None, loss_param=None):
     model.eval()
     
     metric = Metric(metrics)
@@ -96,7 +96,7 @@ def evaluate(model, data_loader, device, metrics, criterion):
         targets = targets.to(device)  
 
         outputs = model(eeg_data, peri_data)
-        loss = criterion(outputs, targets)
+        loss = criterion(outputs, targets) + (0 if loss_func is None else loss_func(loss_param))
         
         metric.update(torch.argmax(outputs, dim=1), targets, loss.item())
     
@@ -118,7 +118,7 @@ def sub_evaluate(model, data_loader, sub_labels, device, metrics, criterion, los
         labels = torch.argmax(labels, dim=1)
 
         prediction = model(eeg_features, bio_features)
-        loss = criterion(prediction, labels) + (0 if loss_func is None else loss_func(prediction, labels))
+        loss = criterion(prediction, labels) + (0 if loss_func is None else loss_func(loss_param))
 
         metric.update(torch.argmax(prediction, dim =1), labels, sub_label, loss.item())
     

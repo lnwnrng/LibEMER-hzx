@@ -26,7 +26,7 @@ def train(model, dataset_train, dataset_val, dataset_test, device, output_dir="r
         dataset_test, sampler=sampler_test, batch_size=batch_size, num_workers=4
     )
     test_sub_label_loader = DataLoader(
-        test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4, drop_last=True
+        test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4, drop_last=False
     ) if test_sub_label is not None else None
     model = model.to(device)
     best_metric = {s: 0. for s in metrics}
@@ -112,15 +112,12 @@ def sub_evaluate(model, data_loader, sub_labels, device, metrics, criterion, los
         eeg_features = eeg_features.to(device)
         bio_features = bio_features.to(device)
         labels = labels.to(device)
-        labels = torch.argmax(labels, dim=1)
+        metric_labels = torch.argmax(labels, dim=1) if labels.ndim > 1 else labels.to(torch.long)
 
-        (source_pred, target_pred, pred_domain,
-         s_eeg_extract, s_bio_extract, t_eeg_extract, t_bio_extract,
-         norm_s_eeg_extract, norm_s_bio_extract, norm_t_eeg_extract, norm_t_bio_extract
-         ) = model(eeg_features, bio_features, eeg_features, bio_features)
-
-        loss = criterion(source_pred, labels) + (0 if loss_func is None else loss_func(loss_param))
-        metric.update(torch.argmax(source_pred, dim=1), labels, sub_label, loss.item())
+        prediction = model(eeg_features, bio_features)
+        loss_targets = labels if labels.ndim > 1 else metric_labels
+        loss = criterion(prediction, loss_targets) + (0 if loss_func is None else loss_func(loss_param))
+        metric.update(torch.argmax(prediction, dim=1), metric_labels, sub_label, loss.item())
 
     print('\033[34m eval state:' + metric.value())
     return metric.values

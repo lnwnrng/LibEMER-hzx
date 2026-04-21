@@ -26,7 +26,7 @@ def train(model, dataset_train, dataset_val, dataset_test, device, output_dir='r
     data_loader_val = DataLoader(dataset_val, sampler=sampler_val, batch_size=batch_size, num_workers=4)
     data_loader_test = DataLoader(dataset_test, sampler=sampler_test, batch_size=batch_size, num_workers=4)
     test_sub_label_loader = DataLoader(
-        test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4
+        test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4, drop_last=False
     ) if test_sub_label is not None else None
 
     model = model.to(device)
@@ -118,7 +118,7 @@ def train(model, dataset_train, dataset_val, dataset_test, device, output_dir='r
 
 
 @torch.no_grad()
-def evaluate(model, data_loader, device, metrics, criterion):
+def evaluate(model, data_loader, device, metrics, criterion, loss_func=None, loss_param=None):
     model.eval()
     metric = Metric(metrics)
     eval_bar = tqdm(enumerate(data_loader), total=len(data_loader), desc='Evaluating:')

@@ -59,9 +59,11 @@ def train(model, dataset_train, dataset_val, dataset_test, device, output_dir='r
     sampler_test = SequentialSampler(dataset_test)
 
     data_loader_train = DataLoader(dataset_train, sampler=sampler_train, batch_size=batch_size, num_workers=4,drop_last=train_drop_flag)
-    data_loader_val = DataLoader(dataset_val, sampler=sampler_val, batch_size=batch_size, num_workers=4,drop_last=train_drop_flag)
-    data_loader_test = DataLoader(dataset_test, sampler=sampler_test, batch_size=batch_size, num_workers=4,drop_last=train_drop_flag)
-    test_sub_label_loader = DataLoader(test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4,drop_last=train_drop_flag)
+    data_loader_val = DataLoader(dataset_val, sampler=sampler_val, batch_size=batch_size, num_workers=4,drop_last=val_drop_flag)
+    data_loader_test = DataLoader(dataset_test, sampler=sampler_test, batch_size=batch_size, num_workers=4,drop_last=test_drop_flag)
+    test_sub_label_loader = DataLoader(
+        test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4, drop_last=test_drop_flag
+    ) if test_sub_label is not None else None
 
     model = model.to(device)
 

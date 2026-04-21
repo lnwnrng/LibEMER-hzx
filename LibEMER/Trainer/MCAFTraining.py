@@ -25,7 +25,7 @@ def train(model, dataset_pretrain, dataset_train, dataset_val, dataset_test, dev
     data_loader_val = DataLoader(dataset_val, sampler=sampler_val, batch_size=batch_size, num_workers=4)
     data_loader_test = DataLoader(dataset_test, sampler=sampler_test, batch_size=batch_size, num_workers=4)
     test_sub_label_loader = DataLoader(
-        test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4
+        test_sub_label, sampler=sampler_test, batch_size=batch_size, num_workers=4, drop_last=False
     ) if test_sub_label is not None else None
     model = model.to(device)
     best_metric = {m: 0.0 for m in metrics}
@@ -70,7 +70,7 @@ def train(model, dataset_pretrain, dataset_train, dataset_val, dataset_test, dev
     return metric_value
 
 @torch.no_grad()
-def evaluate(model, data_loader, device, metrics, criterion):
+def evaluate(model, data_loader, device, metrics, criterion, loss_func=None, loss_param=None):
     model.eval()
     metric = Metric(metrics)
     

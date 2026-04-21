@@ -25,20 +25,26 @@ import logging
 class EncoderNet(nn.Module):
     def __init__(self, args):
         super(EncoderNet, self).__init__()
-        logger = logging.getLogger("model")
         self.args = args
         self.resnet_embed = 256
         self.backbone_output =  self.resnet_embed * 2
+        self.num_classes = getattr(args, "num_classes", 2)
+        self.dataset_config = get_g2g_dataset_config(getattr(args, "dataset", ""))
+        self.eeg_nodes = self.dataset_config["eeg_nodes"]
+        self.eeg_feature_dim = self.dataset_config["eeg_feature_dim"]
+        self.eye_nodes = self.dataset_config["eye_nodes"]
+        self.eye_feature_dim = self.dataset_config["eye_feature_dim"]
+        self.eeg_flat_dim = self.eeg_nodes * self.eeg_feature_dim
+        self.eye_flat_dim = self.eye_nodes * self.eye_feature_dim
 
         self.relationAwareness = RelationAwareness(args = self.args)
-        self.rand_order = random_1D_node(2, 32) #32 62
-        print(self.rand_order)
+        self.rand_order = random_1D_node(2, self.eeg_nodes)
 
         # define selected backbone
         self.backbone = ResNet50()
 
         # get node location
-        self.location = torch.from_numpy(return_coordinates_deap()).to(self.args.device) #return_coordinates_deap()
+        self.location = torch.from_numpy(self.dataset_config["coordinates"]).to(self.args.device)
 
         self.l_relu = nn.LeakyReLU(0.1)
         self.bn = nn.BatchNorm1d(self.backbone_output)
@@ -47,7 +53,7 @@ class EncoderNet(nn.Module):
         self.tanh = nn.Tanh()
 
         self.mlp_0 = nn.Linear(512, self.backbone_output)
-        self.mlp_1 = nn.Linear(self.backbone_output, 2)
+        self.mlp_1 = nn.Linear(self.backbone_output, self.num_classes)
 
 
     def forward(self, x):
@@ -56,14 +62,21 @@ class EncoderNet(nn.Module):
         # 随机排列运行分支
         ######################################################
         ran_list = []
+        expected_dim = self.eeg_flat_dim + self.eye_flat_dim
+        if x.shape[1] != expected_dim:
+            raise ValueError(
+                f"G2G expected flattened feature dim {expected_dim}, got {x.shape[1]} "
+                f"for dataset {getattr(self.args, 'dataset', 'unknown')}"
+            )
         for index in range(2):
-            x_eeg = x[:, :160] # 160 310
-            x_eye = x[:, 160:240] # 160+80 310 380
+            x_eeg = x[:, :self.eeg_flat_dim]
+            x_eye = x[:, self.eeg_flat_dim:self.eeg_flat_dim + self.eye_flat_dim]
 
-            x_eeg = rearrange(x_eeg, 'b (h c) -> b h c', h=32) #(32,62,5)/(32,32,5)
-            x_eye = rearrange(x_eye, 'b (h c) -> b h c', h=8) #(32,6,10)/(32,8,10)
+            x_eeg = rearrange(x_eeg, 'b (h c) -> b h c', h=self.eeg_nodes)
+            x_eye = rearrange(x_eye, 'b (h c) -> b h c', h=self.eye_nodes)
 
-            x_random, coor_random = x_eeg[:, self.rand_order[index], :], self.location[self.rand_order[index], :]
+            x_random = x_eeg[:, self.rand_order[index], :]
+            coor_random = self.location[self.rand_order[index], :]
             x_ = self.relationAwareness(x_random, coor_random, x_eye) # (batch_size, 62, 62, 3)/ (32,32,3)
 
             ran_list.append(x_)
@@ -228,6 +241,27 @@ def random_1D_node(num, node_num):
 
     rand_torch = torch.cat(tuple(rand_lists), 0)
     return rand_torch
+
+
+def get_g2g_dataset_config(dataset):
+    dataset_name = dataset.lower()
+    if dataset_name.startswith("deap"):
+        return {
+            "eeg_nodes": 32,
+            "eeg_feature_dim": 5,
+            "eye_nodes": 8,
+            "eye_feature_dim": 10,
+            "coordinates": return_coordinates_deap(),
+        }
+    if dataset_name.startswith("seed"):
+        return {
+            "eeg_nodes": 62,
+            "eeg_feature_dim": 5,
+            "eye_nodes": 6,
+            "eye_feature_dim": 10,
+            "coordinates": return_coordinates(),
+        }
+    raise ValueError(f"Unsupported dataset for G2G: {dataset}")
 
 
 def return_coordinates():

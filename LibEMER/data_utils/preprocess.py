@@ -206,8 +206,32 @@ def eog_remove(data):
     input shape : (session, subject, trail, channel, filter_data)
     output shape : (session, subject, trail, channel, filter_data)
     """
-    pca = PCA()
-    return data
+    cleaned_data = []
+    for session in data:
+        cleaned_session = []
+        for subject in session:
+            cleaned_subject = []
+            for trial in subject:
+                trial_array = np.asarray(trial)
+                if trial_array.ndim != 2 or min(trial_array.shape) < 2:
+                    cleaned_subject.append(trial_array)
+                    continue
+
+                try:
+                    # Fit PCA on time-major samples and remove the dominant component.
+                    trial_time_major = trial_array.T
+                    pca = PCA(n_components=min(trial_time_major.shape))
+                    transformed = pca.fit_transform(trial_time_major)
+                    if transformed.shape[1] > 0:
+                        transformed[:, 0] = 0.0
+                    cleaned_trial = pca.inverse_transform(transformed).T
+                except Exception:
+                    cleaned_trial = trial_array
+
+                cleaned_subject.append(cleaned_trial)
+            cleaned_session.append(cleaned_subject)
+        cleaned_data.append(cleaned_session)
+    return cleaned_data
 
 def time_extraction(raw_data, sample_rate, time_window, overlap):
     '''

@@ -52,7 +52,7 @@ def get_data(setting=None):
                                 ecg_bands=setting.ecg_bands, time_window=setting.time_window, overlap=setting.overlap, car=False, 
                                 whiten=False,sample_length=setting.sample_length, stride=setting.stride, bio_length=setting.bio_length, 
                                 bio_stride=setting.bio_stride, TnF=setting.TnF, only_seg=setting.only_seg if setting.dataset not in extract_dataset else True, 
-                                feature_type=setting.feature_type,eog_clean=True, extract_bio = setting.extract_bio if setting.dataset not in extract_dataset else False,
+                                feature_type=setting.feature_type,eog_clean=setting.eog_clean, extract_bio = setting.extract_bio if setting.dataset not in extract_dataset else False,
                                 normalization=False)
             all_eeg, all_label, num_classes = label_process(data=all_eeg, label=label, bounds=setting.bounds, onehot=setting.onehot, label_used=setting.label_used)
             return all_eeg, all_bio, all_label,eeg_channels, bio_channels, eeg_feature_dim, bio_feature_dim, num_classes
@@ -69,7 +69,7 @@ def get_data(setting=None):
                                 ecg_bands=setting.ecg_bands, time_window=setting.time_window, overlap=setting.overlap, car=False, 
                                 whiten=False,sample_length=setting.sample_length, stride=setting.stride, bio_length=setting.bio_length, 
                                 bio_stride=setting.bio_stride, TnF=setting.TnF, only_seg=setting.only_seg if setting.dataset not in extract_dataset else True, 
-                                feature_type=setting.feature_type,eog_clean=True, extract_bio = setting.extract_bio if setting.dataset not in extract_dataset else False,
+                                feature_type=setting.feature_type,eog_clean=setting.eog_clean, extract_bio = setting.extract_bio if setting.dataset not in extract_dataset else False,
                                 normalization=False)
         
         all_eeg, all_label, num_classes = label_process(data=all_eeg, label=label, bounds=setting.bounds, onehot=setting.onehot, label_used=setting.label_used)
@@ -263,7 +263,7 @@ def read_seed_feature(dir_path, feature_type="de"):
     # output shape : (session, subject, trail, channel, raw_data), (session, subject, trail, label),
 
     # Extract the EEG data of each subject from the SEED dataset, and partition the data of each session
-    dir_path += "Extracted_Features"
+    dir_path = os.path.join(dir_path, "Extracted_Features")
     eeg_files = [['1_20131027.mat', '2_20140404.mat', '3_20140603.mat',
                   '4_20140621.mat', '5_20140411.mat', '6_20130712.mat',
                   '7_20131027.mat', '8_20140511.mat', '9_20140620.mat',
@@ -286,7 +286,7 @@ def read_seed_feature(dir_path, feature_type="de"):
     }
 
     # Extract the label for all trail in three sessions, label shape : (15)
-    label = np.array(loadmat(f"{dir_path}/label.mat")['label'])
+    label = np.array(loadmat(os.path.join(dir_path, "label.mat"))['label'])
     label = np.tile(label[0] + 1, (3, 15, 1))
 
     # Set index based on selected characteristics
@@ -305,7 +305,7 @@ def read_seed_feature(dir_path, feature_type="de"):
     return eeg_data, None, label, None, 62
 
 def parallel_read_seed_feature(fi, dir_path, label, file):
-    subject_data = loadmat("{}/{}".format(dir_path, file))
+    subject_data = loadmat(os.path.join(dir_path, file))
     keys = list(subject_data.keys())[3:]
     trail_datas = []
     for i in range(15):

@@ -25,6 +25,18 @@ import torch.nn as nn
 
 #python test_deap_multimodal.py -dataset_path data_preprocessed_python -dataset deap -use_multimodal -sample_length 128 -stride 128 -bio_length 128 -bio_stride 128 -split_type kfold -bounds 5 5 -label_used valence -only_seg -onehot
 
+
+def flatten_single_step_sequence(data, feature_name):
+    if data.ndim == 4:
+        return data
+    if data.ndim == 5 and data.shape[1] == 1:
+        return data[:, 0]
+    raise ValueError(
+        f"HetEmotionNet only supports single-step sequence inputs after TnF preprocessing, "
+        f"but got {feature_name} shape {data.shape}."
+    )
+
+
 def main(args):
     if args.setting is not None:
         setting = preset_setting[args.setting](args)
@@ -32,6 +44,8 @@ def main(args):
         setting = set_setting_by_args(args)
 
     setup_seed(args.seed)
+    if not setting.dataset.startswith('deap'):
+        raise ValueError("HetEmotionNet benchmark entry only supports DEAP multimodal binary tasks.")
     #如果要提取频域特征，需要手动设置提取的频段
     setting.extract_bands = [[4,8],[8,14],[14,31],[31,45]]
     setting.eog_bands = [[4,8],[8,14],[14,31],[31,45]]
@@ -40,12 +54,16 @@ def main(args):
     setting.bvp_bands = [[0,0.1],[0.1,0.2],[0.2,0.3],[0.3,0.4]]
     setting.resp_bands = [[0,0.6],[0.6,1.2],[1.2,1.8],[1.8,2.4]]
     setting.temp_bands =[[0, 0.05],[0.05, 0.1],[0.1, 0.15],[0.15, 0.2]]
+    setting.TnF = True
+    setting.extract_bio = True
 
     device = torch.device(args.device)
     assert setting.use_multimodal == True, 'You do not use multimodal data, please set use_multimodal to True'
 
     eeg_data, bio_data, label,eeg_channels, bio_channels, eeg_feature_dim, bio_feature_dim, num_classes = get_data(setting)
     eeg_data, bio_data, label = merge_to_part_multimodal(eeg_data, bio_data, label, setting)
+    if num_classes != 2:
+        raise ValueError(f"HetEmotionNet benchmark entry expects binary DEAP labels, but got {num_classes} classes.")
     device = torch.device(args.device)
 
     best_metrics = []
@@ -81,11 +99,24 @@ def main(args):
                 val_bio_data = test_bio_data
                 val_label = test_label
 
-            # train_data = np.concatenate((train_eeg_data, train_bio_data), 1)
-            # val_data = np.concatenate((val_eeg_data, val_bio_data), 1)
-            # test_data = np.concatenate((test_eeg_data, test_bio_data), 1)
+            train_eeg_data = flatten_single_step_sequence(train_eeg_data, "train_eeg_data")
+            val_eeg_data = flatten_single_step_sequence(val_eeg_data, "val_eeg_data")
+            test_eeg_data = flatten_single_step_sequence(test_eeg_data, "test_eeg_data")
+            train_bio_data = flatten_single_step_sequence(train_bio_data, "train_bio_data")
+            val_bio_data = flatten_single_step_sequence(val_bio_data, "val_bio_data")
+            test_bio_data = flatten_single_step_sequence(test_bio_data, "test_bio_data")
 
-            model = HetEmotionNet(args.device, 40, 128, 4, 2)
+            freq_feature_dim = len(setting.extract_bands)
+            combined_feature_dim = train_eeg_data.shape[-1]
+            time_feature_dim = combined_feature_dim - freq_feature_dim
+            num_nodes = train_eeg_data.shape[1] + train_bio_data.shape[1]
+            if time_feature_dim <= 0:
+                raise ValueError(
+                    f"HetEmotionNet requires time-domain features beyond the {freq_feature_dim} frequency bands, "
+                    f"but got feature dim {combined_feature_dim}."
+                )
+
+            model = HetEmotionNet(args.device, num_nodes, time_feature_dim, freq_feature_dim, num_classes)
             # Train one round using the train one round function defined in the model
             dataset_train = torch.utils.data.TensorDataset(torch.Tensor(train_eeg_data), torch.Tensor(train_bio_data),torch.Tensor(train_label))
             dataset_val = torch.utils.data.TensorDataset(torch.Tensor(val_eeg_data), torch.Tensor(val_bio_data),torch.Tensor(val_label))

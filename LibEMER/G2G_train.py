@@ -86,6 +86,7 @@ def main(args):
                     val_label = test_label
 
 
+                args.num_classes = num_classes
                 model = Model['G2G'](args)
                 train_data = np.concatenate([
                     train_eeg.reshape(train_eeg.shape[0], -1),
@@ -204,6 +205,7 @@ def main(args):
                     val_bio = test_bio
                     val_label = test_label
 
+                args.num_classes = num_classes
                 model = Model['G2G'](args)
                 train_data = np.concatenate([
                     train_eeg.reshape(train_eeg.shape[0], -1),
