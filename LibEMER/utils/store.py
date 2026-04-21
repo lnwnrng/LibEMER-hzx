@@ -5,6 +5,7 @@ from pathlib import Path
 
 import torch
 
+
 def make_output_dir(args, model):
     output_dir = Path(args.output_dir)
     output_dir = output_dir / model
@@ -15,10 +16,11 @@ def make_output_dir(args, model):
         output_dir = output_dir / args.split_type
     if args.label_used is not None:
         if len(args.label_used) == 1:
-            output_dir = output_dir/args.label_used[0]
+            output_dir = output_dir / args.label_used[0]
         else:
-            output_dir = output_dir/ "both".join(label for label in args.label_used)
+            output_dir = output_dir / "both".join(label for label in args.label_used)
     return output_dir
+
 
 def save_state(output_dir, model, optimizer, epoch, r_idx='last', rr_idx='last', metric=None, state='best'):
     # compatibility
@@ -26,7 +28,7 @@ def save_state(output_dir, model, optimizer, epoch, r_idx='last', rr_idx='last',
         output_dir = make_output_dir(output_dir, output_dir.model)
     else:
         output_dir = Path(output_dir)
-    if not ( r_idx == 'last' and rr_idx == 'last'):
+    if not (r_idx == 'last' and rr_idx == 'last'):
         output_dir = output_dir / str(r_idx)
         output_dir = output_dir / str(rr_idx)
 
@@ -61,18 +63,34 @@ def save_data(args, data, label):
     print(f"Saving Processed Data To {save_path}")
 
 
+def _build_log_file_name(args):
+    protocol_map = {
+        'sub_dependent': 'SD',
+        'sub_independent': 'SI',
+    }
+    protocol = protocol_map.get(getattr(args, 'experiment_mode', None))
+    if protocol is None:
+        return time.strftime("%Y-%m-%d %H_%M_%S", args.time)
+
+    name_parts = [args.model, args.dataset, protocol]
+    if args.label_used:
+        if len(args.label_used) == 1:
+            name_parts.append(args.label_used[0])
+        else:
+            name_parts.append("both".join(label for label in args.label_used))
+    name_parts.append(time.strftime("%Y-%m-%d", args.time))
+    return "_".join(name_parts)
+
 
 def save_res(args, metric):
     log_dir = Path(args.log_dir)
     add_dir(log_dir)
-    log_file = log_dir / time.strftime("%Y-%m-%d %H_%M_%S", args.time)
+    log_file = log_dir / _build_log_file_name(args)
     if not os.path.exists(log_file):
-        f = open(log_file, 'w')
-        f.write(str(args))
-        f.close()
-    f = open(log_file, 'a')
-    f.write('\n'+str(metric))
-    f.close()
+        with open(log_file, 'w') as f:
+            f.write(str(args))
+    with open(log_file, 'a') as f:
+        f.write('\n' + str(metric))
 
 
 def add_dir(path):
