@@ -5,6 +5,8 @@ from pathlib import Path
 
 import torch
 
+from config.setting import resolve_effective_experiment_mode
+
 
 def make_output_dir(args, model):
     output_dir = Path(args.output_dir)
@@ -68,7 +70,7 @@ def _build_log_file_name(args):
         'sub_dependent': 'SD',
         'sub_independent': 'SI',
     }
-    protocol = protocol_map.get(getattr(args, 'experiment_mode', None))
+    protocol = protocol_map.get(resolve_effective_experiment_mode(args))
     if protocol is None:
         return time.strftime("%Y-%m-%d %H_%M_%S", args.time)
 

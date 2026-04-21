@@ -184,6 +184,17 @@
 - 影响范围: 旧实现可能在不支持的数据集上“看似可跑”，但与论文基准设置不一致，且容易因硬编码维度导致后续错误。
 - 论文一致性: 是。论文中 HetEmotionNet 仅用于 DEAP 二分类多模态设置。
 
+### 问题 21: 通过 `-setting` 运行 SI 协议时，启动表格与结果命名可能错误显示为 SD
+- 涉及文件:
+- `LibEMER/config/setting.py`
+- `LibEMER/utils/utils.py`
+- `LibEMER/utils/store.py`
+- 触发条件: 使用 `REPRODUCTION.md` 中基于 `-setting ...sub_independent...` 的 SI 复现命令启动训练时。
+- 根因: 实际训练协议由 preset `setting` 决定，但启动表格 `state_log()` 和结果文件命名 `_build_log_file_name()` 仍直接读取原始 `args.experiment_mode`；而 `args.experiment_mode` 默认值是 `sub_dependent`，且 `state_log(args)` 发生在 `main()` 内部构造 `setting` 之前，导致日志展示与真实协议脱节。此外，`deap_multimodal_sub_independent_train_val_test_setting()` 的提示语也误写成了 `sub dependent`。
+- 修复方式: 新增基于 `args.setting` 解析实际生效协议与划分方式的辅助函数，让启动表格和结果文件名统一按真实 preset 展示；同时更正 DEAP 多模态 SI preset 的提示语。
+- 影响范围: 不会改变实际训练/划分逻辑，最终数值结果仍然按 SI 协议产生；但会误导实验启动时的协议判断，并可能把 SI 结果错误归档为 SD，影响复现记录与结果管理。
+- 论文一致性: 是。虽然不改变实际训练协议，但会直接影响 benchmark 协议标识与结果留档的一致性。
+
 ## 本轮静态验证范围
 
 本轮未执行 Python 运行验证，只做静态修复与交叉检查，原因是当前环境未进行可运行训练链路验证，且本轮范围已明确为静态审查。
@@ -194,6 +205,7 @@
 - `G2G.py` 中已去除对 `160`、`240`、`32` 和 `return_coordinates_deap()` 的无条件 DEAP-only 依赖。
 - 多模态数据加载不再静默强制 `eog_clean=True`。
 - `HetEmotionNet_train.py` 已显式限制为 DEAP 二分类，并强制开启 TnF 与生理特征提取。
+- 启动表格与结果文件名中的协议标识已按实际生效的 `setting` 对齐，DEAP 多模态 SI preset 的提示语已更正。
 - `BUGFIX.md` 已重写为正常 UTF-8 文本。
 
 ## 备注

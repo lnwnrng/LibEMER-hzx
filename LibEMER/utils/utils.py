@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import random
 
+from config.setting import resolve_effective_experiment_mode, resolve_effective_split_type
 from utils.store import save_res
 
 
@@ -15,8 +16,8 @@ def state_log(args):
         "batch size": args.batch_size,
         "epochs": args.epochs,
         "learning rate": args.lr,
-        "experiment mode": args.experiment_mode,
-        "split_type": args.split_type,
+        "experiment mode": resolve_effective_experiment_mode(args),
+        "split_type": resolve_effective_split_type(args),
         "log dir": args.log_dir,
         "output dir": args.output_dir,
     }

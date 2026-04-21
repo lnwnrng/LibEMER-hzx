@@ -78,6 +78,35 @@ class Setting:
 
 
 
+def resolve_effective_experiment_mode(args):
+    experiment_mode = getattr(args, "experiment_mode", None)
+    setting_name = getattr(args, "setting", None)
+    if setting_name is None:
+        return experiment_mode
+
+    for mode in ("sub_independent", "sub_dependent", "cross_session"):
+        if mode in setting_name:
+            return mode
+    return experiment_mode
+
+
+def resolve_effective_split_type(args):
+    split_type = getattr(args, "split_type", None)
+    setting_name = getattr(args, "setting", None)
+    if setting_name is None:
+        return split_type
+
+    if "train_val_test" in setting_name:
+        return "train_val_test"
+    if "leave_one_out" in setting_name:
+        return "leave_one_out"
+    if "front_back" in setting_name:
+        return "front_back"
+    if "kfold" in setting_name or "5fold" in setting_name or "10fold" in setting_name:
+        return "kfold"
+    return split_type
+
+
 def set_setting_by_args(args):
     if args.dataset_path is None:
         print("Please set the dataset path")
@@ -281,7 +310,7 @@ def deap_multimodal_sub_independent_train_val_test_setting(args):
     if not args.dataset.startswith('deap'):
         print('not using deap dataset, please check your setting')
         exit(1)  
-    print('Using Default DEAP multimodal sub dependent train_val_test experiment mode,\n')
+    print('Using Default DEAP multimodal sub independent train_val_test experiment mode,\n')
     return Setting(dataset = args.dataset, use_multimodal=args.use_multimodal, dataset_path=args.dataset_path,pass_band=[args.low_pass, args.high_pass],
                    extract_bands = None, time_window = args.time_window, overlap = args.overlap,TnF = args.TnF,
                    sample_length = args.sample_length, stride = args.stride, bio_length=args.bio_length, bio_stride = args.bio_stride,
